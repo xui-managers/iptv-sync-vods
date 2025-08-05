@@ -2,11 +2,12 @@ require('dotenv').config();
 const axios = require('axios');
 const mysql = require('mysql2/promise');
 const updateBouquets = require('./updateBouquets');
+const chunkArray = require('./chunkArray');
 
 // --- CONFIGURAÇÕES
 const {
   XTREAM_URL_VODS, XTREAM_USER_VODS, XTREAM_PASS_VODS,
-  DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, BATCH_SIZE
+  DB_HOST, DB_USER, DB_PASSWORD, DB_NAME
 } = process.env;
 
 if (!XTREAM_URL_VODS || !XTREAM_USER_VODS || !XTREAM_PASS_VODS || !DB_HOST || !DB_USER || !DB_PASSWORD || !DB_NAME) {
@@ -49,14 +50,6 @@ async function main() {
   }
 }
 
-
-function chunkArray(array, chunkSize) {
-  const chunks = [];
-  for (let i = 0; i < array.length; i += chunkSize) {
-    chunks.push(array.slice(i, i + chunkSize));
-  }
-  return chunks;
-}
 
 async function processVODs(connection) {
   console.log("🔄 Buscando categorias e filmes da API...");
@@ -103,7 +96,7 @@ async function processVODs(connection) {
   );
   const existingVodKeys = new Set(existingVods.map(v => `${v.stream_display_name}:${v.custom_sid}`));
 
-  const chunks = chunkArray(vodStreams, BATCH_SIZE);
+  const chunks = chunkArray(vodStreams);
 
   let newCount = 0;
   let skipCount = 0;
