@@ -1,20 +1,21 @@
 require('dotenv').config();
 const axios = require('axios');
 const mysql = require('mysql2/promise');
+const updateBouquets = require('./updateBouquets');
 
 // --- CONFIGURAÇÕES ---
 const {
-    XTREAM_URL, XTREAM_USER, XTREAM_PASS,
+    XTREAM_URL_CHANNELS, XTREAM_USER_CHANNELS, XTREAM_PASS_CHANNELS,
     DB_HOST, DB_USER, DB_PASSWORD, DB_NAME
 } = process.env;
 
 // Validação básica das variáveis de ambiente
-if (!XTREAM_URL || !XTREAM_USER || !XTREAM_PASS || !DB_HOST || !DB_USER || !DB_PASSWORD || !DB_NAME) {
+if (!XTREAM_URL_CHANNELS || !XTREAM_USER_CHANNELS || !XTREAM_PASS_CHANNELS || !DB_HOST || !DB_USER || !DB_PASSWORD || !DB_NAME) {
     console.error("ERRO: Por favor, configure todas as variáveis no arquivo .env");
     process.exit(1);
 }
 
-const xtreamApiUrl = `${XTREAM_URL}/player_api.php?username=${XTREAM_USER}&password=${XTREAM_PASS}`;
+const xtreamApiUrl = `${XTREAM_URL_CHANNELS}/player_api.php?username=${XTREAM_USER_CHANNELS}&password=${XTREAM_PASS_CHANNELS}`;
 
 async function main() {
     console.log("Iniciando processo de sincronização...");
@@ -42,7 +43,7 @@ async function main() {
             throw new Error("Resposta da API inválida. Verifique suas credenciais e URL.");
         }
 
-        console.log(`Encontradas ${apiCategories.data.length} categorias e ${apiStreams.data.length} canais na API.`);
+        console.log(` -> Encontradas ${apiCategories.data.length} categorias e ${apiStreams.data.length} canais na API.`);
 
         const connection = await dbPool.getConnection();
         await connection.beginTransaction();
@@ -131,7 +132,7 @@ async function processStreams(connection, apiStreams, apiToDbCategoryIdMap) {
             continue;
         }
 
-        const streamSource = `["${XTREAM_URL}/${XTREAM_USER}/${XTREAM_PASS}/${stream.stream_id}"]`;
+        const streamSource = `["${XTREAM_URL_CHANNELS}/${XTREAM_USER_CHANNELS}/${XTREAM_PASS_CHANNELS}/${stream.stream_id}"]`;
 
         const streamData = {
             category_id: `[${dbCategoryId}]`,
@@ -155,7 +156,10 @@ async function processStreams(connection, apiStreams, apiToDbCategoryIdMap) {
         }
     }
 
-    console.log(`${newStreamsCount} novos canais foram inseridos.`);
+    if(newStreamsCount > 0) {
+        await updateBouquets(connection, [1,2], 1);
+    }
+    console.log(`✅ ${newStreamsCount} novos canais foram inseridos.`);
     if (skippedStreamsCount > 0) {
         console.log(`${skippedStreamsCount} canais foram pulados por falta de categoria.`);
     }
