@@ -1,12 +1,12 @@
 require('dotenv').config();
 const axios = require('axios');
 const mysql = require('mysql2/promise');
-const { updateBouquets } = require('./updateBouquets');
+const updateBouquets = require('./updateBouquets');
 
 // --- CONFIGURAÇÕES
 const {
   XTREAM_URL_VODS, XTREAM_USER_VODS, XTREAM_PASS_VODS,
-  DB_HOST, DB_USER, DB_PASSWORD, DB_NAME
+  DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, BATCH_SIZE
 } = process.env;
 
 if (!XTREAM_URL_VODS || !XTREAM_USER_VODS || !XTREAM_PASS_VODS || !DB_HOST || !DB_USER || !DB_PASSWORD || !DB_NAME) {
@@ -49,6 +49,15 @@ async function main() {
   }
 }
 
+
+function chunkArray(array, chunkSize) {
+  const chunks = [];
+  for (let i = 0; i < array.length; i += chunkSize) {
+    chunks.push(array.slice(i, i + chunkSize));
+  }
+  return chunks;
+}
+
 async function processVODs(connection) {
   console.log("🔄 Buscando categorias e filmes da API...");
 
@@ -66,7 +75,7 @@ async function processVODs(connection) {
 
   console.log(`🎬 ${vodStreams.length} filmes encontrados em ${vodCategories.length} categorias.`);
 
-  // Processar categorias
+  // --- Mapear categorias
   const [existingDbCategories] = await connection.query(
     "SELECT id, category_name FROM streams_categories WHERE category_type = 'movie'"
   );
@@ -88,40 +97,68 @@ async function processVODs(connection) {
     }
   }
 
-  // Verificar filmes existentes
+  // --- Mapear filmes existentes
   const [existingVods] = await connection.query(
     "SELECT stream_display_name, custom_sid FROM streams WHERE type = 2"
   );
   const existingVodKeys = new Set(existingVods.map(v => `${v.stream_display_name}:${v.custom_sid}`));
 
+  const chunks = chunkArray(vodStreams, BATCH_SIZE);
+
   let newCount = 0;
   let skipCount = 0;
   let failCount = 0;
 
-  for (const vod of vodStreams) {
-    const vodId = String(vod.stream_id);
-    const key = `${vod.name}:${vodId}`;
-    if (existingVodKeys.has(key)) {
-      skipCount++;
-      continue;
-    }
+  for (const batch of chunks) {
 
-    try {
-      const { data: vodInfo } = await axios.get(`${xtreamApiUrl}&action=get_vod_info&vod_id=${vodId}`);
-      const { info, movie_data } = vodInfo;
+    // ⚡ Executa 100 requisições concorrentes
+    const requests = batch.filter(vod => {
+        const key = `${vod.name}:${String(vod.stream_id)}`;
+        if (existingVodKeys.has(key)) {
+            skipCount++;
+            return false; // ignora esse vod
+        } else {
+        }
+        console.log(`📦 Processando lote com ${batch.length} filmes...`);
+        return true;
+    })
+    .map(vod =>
+        axios.get(`${xtreamApiUrl}&action=get_vod_info&vod_id=${vod.stream_id}`)
+        .then(res => ({ vod, info: res.data }))
+        .catch(err => ({ vod, error: err }))
+    );
 
+    const results = await Promise.all(requests);
+    const values = [];
+
+    for (const result of results) {
+      const { vod } = result;
+      const vodId = String(vod.stream_id);
+      const key = `${vod.name}:${vodId}`;
+      if (existingVodKeys.has(key)) {
+        skipCount++;
+        continue;
+      }
+
+      if (result.error) {
+        console.warn(`❌ Erro ao buscar info do VOD ${vod.name}: ${result.error.message}: URL`);
+        failCount++;
+        continue;
+      }
+
+      const { info, movie_data } = result.info;
       const dbCategoryId = apiToDbCategoryIdMap.get(String(movie_data.category_id));
       if (!dbCategoryId) {
         console.warn(`⚠️ Categoria não encontrada para o filme ${vod.name}. Pulando...`);
         continue;
       }
-      console.log(dbCategoryId, vod.name);
+
       const stream_source = `["${XTREAM_URL_VODS}/movie/${XTREAM_USER_VODS}/${XTREAM_PASS_VODS}/${vodId}.${movie_data.container_extension}"]`;
       const stream_icon = info.movie_image || info.backdrop || null;
 
       const movieProperties = {
-        kinopoisk_url: info?.movie_image ? info.movie_image : '',
-        tmdb_id: info?.tmdbInfo ? info.tmdbInfo.id.toString() : '',
+        kinopoisk_url: info?.movie_image || '',
+        tmdb_id: info?.tmdbInfo?.id?.toString() || '',
         name: info.name,
         o_name: info.name,
         cover_big: info?.backdrop,
@@ -145,38 +182,52 @@ async function processVODs(connection) {
         video: [],
         audio: [],
         bitrate: 0,
-        rating: info?.rating ? info.rating : '0',
+        rating: info?.rating || '0',
       };
 
-      const vodData = {
-        stream_display_name: info.name,
+      values.push([
+        info.name,
         stream_source,
         stream_icon,
-        category_id: `[${dbCategoryId}]`,
-        custom_sid: vodId,
-        added: parseInt(movie_data.added) || Math.floor(Date.now() / 1000),
-        type: 2,
-        movie_properties: JSON.stringify(movieProperties),
-        rating: parseFloat(info.rating) || 0,
-        tmdb_id: info.tmdb_id || null,
-        notes: null,
-        year: parseInt(info.releasedate?.slice(0, 4)) || null,
-        read_native: 0,
-      };
+        `[${dbCategoryId}]`,
+        vodId,
+        parseInt(movie_data.added) || Math.floor(Date.now() / 1000),
+        2,
+        JSON.stringify(movieProperties),
+        parseFloat(info.rating) || 0,
+        info.tmdb_id || null,
+        null,
+        parseInt(info.releasedate?.slice(0, 4)) || null,
+        0,
+        'pt-br',
+        1,
+        1,
+        null
+      ]);
+    }
 
-      await connection.query("INSERT INTO streams SET ?", [vodData]);
-      newCount++;
-    } catch (err) {
-      console.warn(`❌ Erro ao processar VOD ${vod.name} (${vodId}):`, err.message);
-      failCount++;
+    if (values.length > 0) {
+      try {
+        await connection.query(`
+          INSERT INTO streams 
+            (stream_display_name, stream_source, stream_icon, category_id, custom_sid, added, type, movie_properties, rating, tmdb_id, notes, year, read_native, tmdb_language, direct_source, gen_timestamps, auto_restart)
+          VALUES ?
+        `, [values]);
+
+        newCount += values.length;
+      } catch (err) {
+        console.error("❌ Erro ao inserir batch no banco:", err.message);
+        failCount += values.length;
+      }
     }
   }
 
   console.log(`✅ ${newCount} novos filmes inseridos.`);
   console.log(`⏭️ ${skipCount} filmes já existiam.`);
-  await updateBouquets(connection, [1,2], 2);
-  if (failCount > 0) {
-    console.log(`❌ ${failCount} falhas ao inserir filmes.`);
+  if (failCount > 0) console.log(`❌ ${failCount} falhas ao inserir filmes.`);
+
+  if(newCount > 0) {
+    await updateBouquets(connection, [1, 2], 2);
   }
 }
 
