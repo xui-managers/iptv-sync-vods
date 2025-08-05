@@ -1,4 +1,4 @@
-# 📦 Channels Synx for XUI.one
+# 📦 Channels Sync for XUI.one
 
 Este é um projeto simples feito em Node.js. Ele pode ser usado para sincronizar canais dentro do XUI.one, tanto novos canais como sincronizar a base inteira.
 
