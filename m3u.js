@@ -24,6 +24,67 @@ if (!M3U8_PATH || !DB_HOST || !DB_USER || !DB_PASSWORD || !DB_NAME) {
 const adultChannels = [];
 const normalChannels = [];
 
+/**
+ * Nessa array é para voce colocar o nome das categorias que tem no arquivo para elas serem ordenadas assim
+ * Pensei em usar o m3u, porem para isso eu teria que alterar a a ordem dos canais, o que para mim não é interessante
+ */
+const categoriasOrganizadas = [
+  // Globos
+  "JOGOS DO DIA",
+  "CANAIS | A FAZENDA 17",
+  "CANAIS | GLOBOS CAPITAIS",
+  "CANAIS | GLOBOS INTERIORES",
+
+  // Esportes
+  "CANAIS | PREMIERES",
+  "CANAIS | SPORTV",
+  "CANAIS | ESPN",
+  "CANAIS | AMAZON PRIME",
+  "CANAIS | DISNEY +",
+  "CANAIS | PARAMOUNT+",
+  "CANAIS | MAX",
+  "CANAIS | CAZE TV",
+  "CANAIS | SPORTY NET",
+  "CANAIS | UFC FIGHT PASS",
+  "CANAIS | NBA LEAGUE PASS",
+  "CANAIS | PAULISTÃO SICREDI 2025",
+  "CANAIS | BRASILEIRAO SERIE D",
+  "CANAIS | ESPORTES",
+
+  // Abertos nacionais
+  "CANAIS | RECORD",
+  "CANAIS | SBT",
+  "CANAIS | MAIS SBT",
+  "CANAIS | BAND",
+  "CANAIS | ABERTOS",
+
+  // Filmes & séries / streams
+  "CANAIS | TELECINE",
+  "CANAIS | HBO",
+  "CANAIS | CINE SKY",
+  "CANAIS | FILMES E SERIES",
+
+  // Notícias e variedades
+  "CANAIS | NOTÍCIAS",
+  "CANAIS | VARIEDADES",
+  "CANAIS | DOCUMENTARIOS",
+
+  // Infantis
+  "CANAIS | INFANTIS",
+
+  // Internacionais / religiosos
+  "CANAIS | RELIGIOSOS",
+  "INTERNACIONAIS | GERAL",
+  "INTERNACIONAIS | EUA",
+
+  // Realitys & especiais
+  "CANAIS | 24 HORAS",
+  "CANAIS | INFANTIS 24H",
+  "CANAIS | DESENHOS 24H",
+
+  // Adultos
+  "XXX: +18 | ADULTOS"
+];
 async function main() {
     console.log("Iniciando sincronização via M3U8...");
     let dbPool;
@@ -68,9 +129,10 @@ async function main() {
             console.log("Inserindo categorias...");
             const categoryIdMap = new Map();
             for (const cat of categorias) {
+                const cat_order = categoriasOrganizadas.indexOf(cat) + 1;
                 const [res] = await connection.query(
-                    "INSERT INTO streams_categories (category_type, category_name) VALUES (?, ?)",
-                    ['live', cat]
+                    "INSERT INTO streams_categories (category_type, category_name, cat_order) VALUES (?, ?, ?)",
+                    ['live', cat, cat_order]
                 );
                 categoryIdMap.set(cat, res.insertId);
             }
