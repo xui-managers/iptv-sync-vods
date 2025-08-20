@@ -4,6 +4,13 @@ const mysql = require('mysql2/promise');
 const updateBouquets = require('./updateBouquets');
 const chunkArray = require('./chunkArray');
 
+// --- Mapeamento customizado de categorias
+const categoryNameMap = {
+  "VOD REBAL2": "VOD Teste ",
+  "VOD REBAL1": "[XXX] Adultos",
+  // adicione mais mapeamentos se precisar
+};
+
 // --- CONFIGURAÇÕES
 const {
   XTREAM_URL_VODS, XTREAM_USER_VODS, XTREAM_PASS_VODS,
@@ -75,18 +82,23 @@ async function processVODs(connection) {
   const existingCategoryMap = new Map(existingDbCategories.map(c => [c.category_name, c.id]));
   const apiToDbCategoryIdMap = new Map();
 
+
   for (const cat of vodCategories) {
     const idStr = String(cat.category_id);
-    if (existingCategoryMap.has(cat.category_name)) {
-      apiToDbCategoryIdMap.set(idStr, existingCategoryMap.get(cat.category_name));
+
+    // se existir no map, renomeia
+    const dbCategoryName = categoryNameMap[cat.category_name] || cat.category_name;
+
+    if (existingCategoryMap.has(dbCategoryName)) {
+      apiToDbCategoryIdMap.set(idStr, existingCategoryMap.get(dbCategoryName));
     } else {
       const [res] = await connection.query(
         "INSERT INTO streams_categories (category_type, category_name, is_adult) VALUES (?, ?, ?)",
-        ['movie', cat.category_name, cat.is_adult]
+        ['movie', dbCategoryName, cat.is_adult]
       );
       const newId = res.insertId;
       apiToDbCategoryIdMap.set(idStr, newId);
-      existingCategoryMap.set(cat.category_name, newId);
+      existingCategoryMap.set(dbCategoryName, newId);
     }
   }
 
