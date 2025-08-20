@@ -11,7 +11,7 @@ const path = require('path');
 
 // --- CONFIGURAÇÕES ---
 const {
-    M3U8_PATH, // caminho local ou URL do m3u8
+    M3U8_PATH,
     DB_HOST, DB_USER, DB_PASSWORD, DB_NAME
 } = process.env;
 

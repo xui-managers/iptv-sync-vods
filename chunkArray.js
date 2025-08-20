@@ -1,4 +1,4 @@
-const chunkSize = 50;
+const chunkSize = 200;
 
 function chunkArray(array) {
   const chunks = [];
