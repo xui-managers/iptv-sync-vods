@@ -31,6 +31,7 @@ const normalChannels = [];
 const categoriasOrganizadas = [
   // Globos
   "JOGOS DO DIA",
+  "EVENTOS INTERNACIONAIS",
   "CANAIS | A FAZENDA 17",
   "CANAIS | GLOBOS CAPITAIS",
   "CANAIS | GLOBOS INTERIORES",
@@ -76,11 +77,16 @@ const categoriasOrganizadas = [
   "CANAIS | RELIGIOSOS",
   "INTERNACIONAIS | GERAL",
   "INTERNACIONAIS | EUA",
+  "INTERNACIONAIS | PORTUGAL",
+  "INTERNACIONAIS | FRANÇA",
 
   // Realitys & especiais
   "CANAIS | 24 HORAS",
   "CANAIS | INFANTIS 24H",
   "CANAIS | DESENHOS 24H",
+  "CANAIS | SERIES 24H",
+  "CANAIS | NOVELA 24H",
+  "CANAIS | SHOWS 24H",
 
   // Adultos
   "XXX: +18 | ADULTOS"
