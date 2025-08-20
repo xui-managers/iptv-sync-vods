@@ -1,0 +1,32 @@
+#Esse arquivo executa as atualizações de filmes todos os dias em meu servidor de teste
+# caso queira usar em seu github, basta cadastrar o arquivo .env como secret com o nome MY_ENV
+name: Run Movies Script
+
+on:
+  schedule:
+    - cron: '0 10 * * *'   # Executa todo dia às 10h UTC
+    - cron: '0 17 * * *'   # Executa todo dia às 17h UTC
+  workflow_dispatch:       # Permite rodar manualmente também
+
+jobs:
+  run-movies:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./node
+
+      - name: Run movies.js
+        run: node movies.js
+        working-directory: ./node
+        env:
+          MY_SECRET: ${{ secrets.MY_ENV }}
