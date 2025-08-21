@@ -55,7 +55,7 @@ async function main() {
   } finally {
     if (dbPool) await dbPool.end();
     console.log("🛑 Fim do processo.");
-    process.exit(1);
+    process.exit(0);
   }
 }
 
