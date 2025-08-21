@@ -3,6 +3,7 @@ const axios = require('axios');
 const mysql = require('mysql2/promise');
 const updateBouquets = require('./updateBouquets');
 const chunkArray = require('./chunkArray');
+const { organizeMovies, categorizeMovies } = require('iptv-vod-organizer');
 
 // --- Mapeamento customizado de categorias
 const categoryNameMap = {
@@ -14,7 +15,7 @@ const categoryNameMap = {
 // --- CONFIGURAÇÕES
 const {
   XTREAM_URL_VODS, XTREAM_USER_VODS, XTREAM_PASS_VODS,
-  DB_HOST, DB_USER, DB_PASSWORD, DB_NAME
+  DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, SYNC_CATEGORIES, USE_IPTV_ORGANIZER
 } = process.env;
 
 if (!XTREAM_URL_VODS || !XTREAM_USER_VODS || !XTREAM_PASS_VODS || !DB_HOST || !DB_USER || !DB_PASSWORD || !DB_NAME) {
@@ -83,22 +84,24 @@ async function processVODs(connection) {
   const apiToDbCategoryIdMap = new Map();
 
 
-  for (const cat of vodCategories) {
-    const idStr = String(cat.category_id);
+  if(SYNC_CATEGORIES === 'true') {
+    for (const cat of vodCategories) {
+      const idStr = String(cat.category_id);
 
-    // se existir no map, renomeia
-    const dbCategoryName = categoryNameMap[cat.category_name] || cat.category_name;
+      // se existir no map, renomeia
+      const dbCategoryName = categoryNameMap[cat.category_name] || cat.category_name;
 
-    if (existingCategoryMap.has(dbCategoryName)) {
-      apiToDbCategoryIdMap.set(idStr, existingCategoryMap.get(dbCategoryName));
-    } else {
-      const [res] = await connection.query(
-        "INSERT INTO streams_categories (category_type, category_name, is_adult) VALUES (?, ?, ?)",
-        ['movie', dbCategoryName, cat.is_adult]
-      );
-      const newId = res.insertId;
-      apiToDbCategoryIdMap.set(idStr, newId);
-      existingCategoryMap.set(dbCategoryName, newId);
+      if (existingCategoryMap.has(dbCategoryName)) {
+        apiToDbCategoryIdMap.set(idStr, existingCategoryMap.get(dbCategoryName));
+      } else {
+        const [res] = await connection.query(
+          "INSERT INTO streams_categories (category_type, category_name, is_adult) VALUES (?, ?, ?)",
+          ['movie', dbCategoryName, cat.is_adult]
+        );
+        const newId = res.insertId;
+        apiToDbCategoryIdMap.set(idStr, newId);
+        existingCategoryMap.set(dbCategoryName, newId);
+      }
     }
   }
 
@@ -110,6 +113,7 @@ async function processVODs(connection) {
 
   const chunks = chunkArray(vodStreams);
 
+  const insertedIds = [];
   let newCount = 0;
   let skipCount = 0;
   let failCount = 0;
@@ -153,10 +157,6 @@ async function processVODs(connection) {
 
       const { info, movie_data } = result.info;
       const dbCategoryId = apiToDbCategoryIdMap.get(String(movie_data.category_id));
-      if (!dbCategoryId) {
-        console.warn(`⚠️ Categoria não encontrada para o filme ${vod.name}. Pulando...`);
-        continue;
-      }
 
       const stream_source = `["${XTREAM_URL_VODS}/movie/${XTREAM_USER_VODS}/${XTREAM_PASS_VODS}/${vodId}.${movie_data.container_extension}"]`;
       const stream_icon = info.movie_image || info.backdrop || null;
@@ -194,7 +194,7 @@ async function processVODs(connection) {
         info.name,
         stream_source,
         stream_icon,
-        `[${dbCategoryId}]`,
+        `[${dbCategoryId || ''}]`,
         vodId,
         parseInt(movie_data.added) || Math.floor(Date.now() / 1000),
         2,
@@ -213,17 +213,37 @@ async function processVODs(connection) {
 
     if (values.length > 0) {
       try {
-        await connection.query(`
+        const [result] = await connection.query(`
           INSERT INTO streams 
             (stream_display_name, stream_source, stream_icon, category_id, custom_sid, added, type, movie_properties, rating, tmdb_id, notes, year, read_native, tmdb_language, direct_source, gen_timestamps, auto_restart)
           VALUES ?
         `, [values]);
+        const firstId = result.insertId;
+        const ids = Array.from({ length: result.affectedRows }, (_, i) => firstId + i);
+
+        insertedIds.push(...ids);
 
         newCount += values.length;
       } catch (err) {
         console.error("❌ Erro ao inserir batch no banco:", err.message);
         failCount += values.length;
       }
+    }
+  }
+
+  if(USE_IPTV_ORGANIZER === 'true') {
+    const firstId = insertedIds[0]
+    const lastId = insertedIds[insertedIds.length - 1];
+
+    if(insertedIds.length > 0 ){ 
+      console.log("🔄 Atualizando categorias dos filmes inseridos via IPTV-ORGANIZER...");
+      const [rows] = await connection.query(
+        `SELECT id, category_id, stream_display_name, movie_properties, year, tmdb_id
+        FROM streams
+        WHERE type = 2 AND id BETWEEN ? AND ?`,
+        [firstId, lastId]
+      );
+      await categorizeMovies(rows);
     }
   }
 

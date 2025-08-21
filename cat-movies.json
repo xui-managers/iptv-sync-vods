@@ -1,0 +1,155 @@
+[
+    {
+        "id": 1,
+        "name": "Lançamentos 2025",
+        "type": "year",
+        "year": 2025
+    },
+    {
+        "id": 2,
+        "name": "Lançamentos 2024",
+        "type": "year",
+        "year": 2024
+    },
+    {
+        "id": 3,
+        "name": "Lançamentos 2023",
+        "type": "year",
+        "year": 2023
+    },
+    {
+        "id": 4,
+        "name": "Filmes | Ação",
+        "type": "genre",
+        "genreId": 28
+    },
+    {
+        "id": 5,
+        "name": "Filmes | Aventura",
+        "type": "genre",
+        "genreId": 12
+    },
+    {
+        "id": 6,
+        "name": "Filmes | Animação",
+        "type": "genre",
+        "genreId": 16
+    },
+    {
+        "id": 7,
+        "name": "Filmes | Comédia",
+        "type": "genre",
+        "genreId": 35
+    },
+    {
+        "id": 8,
+        "name": "Filmes | Crime",
+        "type": "genre",
+        "genreId": 80
+    },
+    {
+        "id": 9,
+        "name": "Filmes | Documentário",
+        "type": "genre",
+        "genreId": 99
+    },
+    {
+        "id": 10,
+        "name": "Filmes | Documentário",
+        "type": "genre",
+        "genreId": 99
+    },
+    {
+        "id": 11,
+        "name": "Filmes | Drama",
+        "type": "genre",
+        "genreId": 18
+    },
+    {
+        "id": 12,
+        "name": "Filmes | Família",
+        "type": "genre",
+        "genreId": 10751
+    },
+    {
+        "id": 13,
+        "name": "Filmes | Fantasia",
+        "type": "genre",
+        "genreId": 14
+    },
+    {
+        "id": 14,
+        "name": "Filmes | História",
+        "type": "genre",
+        "genreId": 36
+    },
+    {
+        "id": 15,
+        "name": "Filmes | Terror",
+        "type": "genre",
+        "genreId": 27
+    },
+    {
+        "id": 16,
+        "name": "Filmes | Música",
+        "type": "genre",
+        "genreId": 10402
+    },
+    {
+        "id": 17,
+        "name": "Filmes | Mistério",
+        "type": "genre",
+        "genreId": 9648
+    },
+    {
+        "id": 18,
+        "name": "Filmes | Mistério",
+        "type": "genre",
+        "genreId": 9648
+    },
+    {
+        "id": 19,
+        "name": "Filmes | Romance",
+        "type": "genre",
+        "genreId": 10749
+    },
+    {
+        "id": 20,
+        "name": "Filmes | Ficção Científica",
+        "type": "genre",
+        "genreId": 878
+    },
+    {
+        "id": 21,
+        "name": "Filmes | Suspense",
+        "type": "genre",
+        "genreId": 53
+    },
+    {
+        "id": 22,
+        "name": "Filmes | Guerra",
+        "type": "genre",
+        "genreId": 10752
+    },
+    {
+        "id": 23,
+        "name": "Filmes | Faroeste",
+        "type": "genre",
+        "genreId": 37
+    },
+    {
+        "id": 15000,
+        "name": "Filmes | Gerais",
+        "type": "uncategorized"
+    },
+    {
+        "id": 20000,
+        "name": "Filmes | Legendados",
+        "type": "subtitled"
+    },
+    {
+        "id": 6969,
+        "name": "Filmes | [XXX] Adultos",
+        "type": "adult"
+    }
+]
