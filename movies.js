@@ -55,6 +55,7 @@ async function main() {
   } finally {
     if (dbPool) await dbPool.end();
     console.log("🛑 Fim do processo.");
+    process.exit(1);
   }
 }
 
@@ -119,7 +120,7 @@ async function processVODs(connection) {
   let failCount = 0;
 
   for (const batch of chunks) {
-
+    console.log(`📦 Processando lote com ${batch.length} filmes...`);
     // ⚡ Executa 100 requisições concorrentes
     const requests = batch.filter(vod => {
         const key = `${vod.name}:${String(vod.stream_id)}`;
@@ -128,7 +129,6 @@ async function processVODs(connection) {
             return false; // ignora esse vod
         } else {
         }
-        console.log(`📦 Processando lote com ${batch.length} filmes...`);
         return true;
     })
     .map(vod =>
