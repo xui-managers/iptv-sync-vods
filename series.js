@@ -2,8 +2,8 @@ require('dotenv').config();
 const axios = require('axios');
 const mysql = require('mysql2/promise');
 const updateBouquets = require('./updateBouquets');
-const chunkArray = require('./util/chunck-array');
 const withRetry = require('./util/with-retry')
+const { chunkArray, defaultChunkSize } = require('./util/chunck-array');
 
 const {
   XTREAM_URL_VODS, XTREAM_USER_VODS, XTREAM_PASS_VODS,
@@ -116,8 +116,6 @@ async function processSeries(connection) {
     }
   }
 
-  const chunks = chunkArray(seriesList);
-
   let newCount = 0;
   let skipCount = 0;
   let failCount = 0;
@@ -127,6 +125,9 @@ async function processSeries(connection) {
   const seriesMap = new Map();
   for (const r of rows)
     seriesMap.set(`${r.title.trim().toLowerCase()}|${r.year || ''}`, r.id);
+
+  
+  const chunks = chunkArray(seriesList, rows.length > 4000 ? (defaultChunkSize / 10) : null);
 
   for (const batch of chunks) {
     console.log(`📦 Processando lote com ${batch.length} séries...\nSeries processadas até o momento: ${newCount + skipCount}`);
