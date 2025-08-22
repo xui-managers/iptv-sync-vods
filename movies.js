@@ -2,7 +2,7 @@ require('dotenv').config();
 const axios = require('axios');
 const mysql = require('mysql2/promise');
 const updateBouquets = require('./updateBouquets');
-const chunkArray = require('./chunkArray');
+const chunkArray = require('./util/chunck-array');
 const { organizeMovies, categorizeMovies } = require('iptv-vod-organizer');
 
 // --- Mapeamento customizado de categorias

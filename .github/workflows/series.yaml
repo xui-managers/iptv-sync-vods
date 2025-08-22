@@ -1,0 +1,35 @@
+ #Esse arquivo executa as atualizações de series todos os dias em meu servidor de teste
+# caso queira usar em seu github, basta cadastrar o arquivo .env como secret com o nome MY_ENV
+name: Run Series Script
+
+on:
+  schedule:
+    - cron: '0 12 * * *'   # Executa todo dia às 10h UTC
+    - cron: '0 20 * * *'   # Executa todo dia às 17h UTC
+  workflow_dispatch:       # Permite rodar manualmente também
+
+jobs:
+  run-series:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Create .env file
+        run: |
+          echo "${{ secrets.MY_ENV }}" > .env
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run series.js
+        run: node series.js
+        working-directory: ./
+        env:
+          MY_SECRET: ${{ secrets.MY_ENV }}
