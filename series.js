@@ -128,6 +128,12 @@ async function processSeries(connection) {
   let skipCount = 0;
   let failCount = 0;
 
+  // Busca todas as series ja cadastradas
+  const [rows] = await connection.query(`SELECT id, title, year FROM streams_series`);
+  const seriesMap = new Map();
+  for (const r of rows)
+    seriesMap.set(`${r.title.trim().toLowerCase()}|${r.year || ''}`, r.id);
+
   for (const batch of chunks) {
     console.log(`📦 Processando lote com ${batch.length} séries...\nSeries processadas até o momento: ${newCount + skipCount}`);
 
@@ -147,14 +153,6 @@ async function processSeries(connection) {
 
     const results = await Promise.all(requests);
 
-    // Busca todas as series ja cadastradas
-    const [rows] = await connection.query(`SELECT id, title, year FROM streams_series`);
-
-    const seriesMap = new Map();
-    // chave: "titulo|ano"  (ano pode ser vazio/null)
-    for (const r of rows) {
-      seriesMap.set(`${r.title.trim().toLowerCase()}|${r.year || ''}`, r.id);
-    }
     for (const result of results) {
       const { series, info } = result;
       const releaseYear = info?.info?.releaseDate?.slice(0, 4) || null;
