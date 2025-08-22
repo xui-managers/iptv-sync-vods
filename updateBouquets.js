@@ -1,5 +1,5 @@
 /**
- * Atualiza os bouquets com novos IDs de streams, filmes ou séries, dependendo do tipo informado.
+ * Atualiza os bouquets com todos os IDs de canais, filmes ou séries, dependendo do tipo informado.
  *
  * @async
  * @param {object} connection - Conexão MySQL utilizada para executar queries.
@@ -32,24 +32,9 @@ async function updateBouquets(connection, bouquetIds, type) {
       continue;
     }
 
-    let idsExistentes = [];
-    const valorAtual = rows[0][column];
-
-    try {
-      idsExistentes = JSON.parse(valorAtual);
-      if (!Array.isArray(idsExistentes)) idsExistentes = [];
-    } catch {
-      // Se não for um JSON válido, assume array vazio
-      idsExistentes = [];
-    }
-
-    // Merge sem duplicatas
-    const merge = [...new Set([...idsExistentes, ...novosIds])];
-
-    // Atualiza o bouquet com os novos filmes
     await connection.query(
       `UPDATE bouquets SET \`${column}\` = ? WHERE id = ?`,
-      [JSON.stringify(merge), bouquetId]
+      [JSON.stringify(novosIds), bouquetId]
     );
 
     console.log(`✅ Bouquet ID ${bouquetId} atualizado com ${merge.length} conteudos.`);
