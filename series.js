@@ -141,7 +141,7 @@ async function processSeries(connection) {
           return { series, info: res.data }
         },
         3,
-        2000
+        (Math.floor(Math.random() * 10) + 1) * 1000 // 1s a 10s
       ).catch(error => ({ series, error }))
     );
 
@@ -249,31 +249,12 @@ async function processSeries(connection) {
                 Math.floor(Date.now() / 1000), seriesId, 'pt-br', null, 0
               ]);
 
-              /*const [streamRes] = await connection.query(`
-                INSERT INTO streams 
-                (type, category_id, stream_display_name, stream_source, stream_icon, notes, 
-                enable_transcode, movie_properties, read_native, target_container, stream_all, 
-                remove_subtitles, direct_source, added, series_no, tmdb_language, year, rating)
-                VALUES (5, ?, ?, ?, ?, ?, 0, ?, 0, 'mp4', 0, 0, 1, ?, ?, 'pt-br', NULL, 0)`,
-                [
-                  `[${catId || ''}]`,
-                  epName,
-                  streamSource,
-                  ep?.info?.movie_image || '',
-                  ep?.plot || '',
-                  movieProperties,
-                  Math.floor(Date.now() / 1000),
-                  seriesId
-                ]
-              );*/
-/*
-              const streamId = streamRes.insertId;
-
-              await connection.query(`
-                INSERT INTO streams_episodes (stream_id, series_id, season_num, episode_num)
-                VALUES (?, ?, ?, ?)`,
-                [streamId, seriesId, seasonNum, ep.episode_num]
-              );*/
+              // Colocamos os valores certinhos para inserir no banco as info dos eps
+              episodesValues.push({
+                seriesId, 
+                seasonNum, 
+                episode_num: ep.episode_num
+              });
             } catch (err) {
               console.warn(`⚠️ Falha ao inserir episódio S${seasonNum}E${ep.episode_num}: ${err.message}`);
             }
@@ -291,14 +272,15 @@ async function processSeries(connection) {
 
             // Gerar os stream_id correspondentes
             const firstId = result.insertId;
-            const episodesBatch = streamsValues.map((_, idx) => [
-              firstId + idx, seriesId, seasonNum, season[idx].episode_num
+            const episodesBatch = episodesValues.map((s, idx) => [
+              firstId + idx, s.seriesId, s.seasonNum, s.episode_num
             ]);
 
             await connection.query(`
               INSERT INTO streams_episodes (stream_id, series_id, season_num, episode_num)
               VALUES ?
             `, [episodesBatch]);
+
             if(existing) {
               console.log(`🆕 ${series.name}: ${streamsValues.length} novos episódios`)
             }

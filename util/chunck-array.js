@@ -5,7 +5,7 @@
  * Sugiro testar conforme você prefere.
  * Por padrão, deixo 100, pois funcionou bem para mim
  */
-const chunkSize = 100;
+const chunkSize = 50;
 
 function chunkArray(array) {
   const chunks = [];
