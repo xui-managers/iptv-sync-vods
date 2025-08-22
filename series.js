@@ -70,9 +70,10 @@ async function main() {
 async function processSeries(connection) {
   console.log("🔄 Buscando categorias e séries da API...");
 
-  const [categoriesRes, seriesRes] = await Promise.all([
+  const [categoriesRes, seriesRes, [existingDbCategories]] = await Promise.all([
     axios.get(`${xtreamApiUrl}&action=get_series_categories`),
-    axios.get(`${xtreamApiUrl}&action=get_series`)
+    axios.get(`${xtreamApiUrl}&action=get_series`),
+    connection.query("SELECT id, category_name FROM streams_categories WHERE category_type = 'series'")
   ]);
 
   const seriesCategories = categoriesRes.data;
@@ -84,41 +85,34 @@ async function processSeries(connection) {
 
   console.log(`📚 ${seriesList.length} séries encontradas em ${seriesCategories.length} categorias.`);
 
-  // --- Mapear categorias
-  const [existingDbCategories] = await connection.query(
-    "SELECT id, category_name FROM streams_categories WHERE category_type = 'series'"
-  );
   const existingCategoryMap = new Map(existingDbCategories.map(c => [c.category_name, c.id]));
   const apiToDbCategoryIdMap = new Map();
 
-  // categorias novas (array de objetos)
-  const newCategories = [];
+  // Filtrar apenas categorias novas
+  const newCategories = seriesCategories.filter(cat => !existingCategoryMap.has(cat.category_name));
 
-  for (const cat of seriesCategories) {
-    const idStr = String(cat.category_id);
-    if (existingCategoryMap.has(cat.category_name)) {
-      apiToDbCategoryIdMap.set(idStr, existingCategoryMap.get(cat.category_name));
-    } else {
-      newCategories.push([ 'series', cat.category_name, cat.is_adult ]);
+  // Se tiver novas, inserir em batch
+  if (newCategories.length > 0) {
+    const values = newCategories.map(cat => ['series', cat.category_name, cat.is_adult]);
+
+    const [insertRes] = await connection.query(
+      "INSERT INTO streams_categories (category_type, category_name, is_adult) VALUES ?",
+      [values]
+    );
+
+    // Mapear IDs inseridos (sequenciais)
+    let newId = insertRes.insertId;
+    for (const cat of newCategories) {
+      apiToDbCategoryIdMap.set(String(cat.category_id), newId);
+      existingCategoryMap.set(cat.category_name, newId);
+      newId++;
     }
   }
 
-  if (newCategories.length > 0) {
-    const [insertRes] = await connection.query(
-      "INSERT INTO streams_categories (category_type, category_name, is_adult) VALUES ?",
-      [newCategories]
-    );
-
-    // gerar os novos IDs inseridos
-    let newId = insertRes.insertId;
-    for (let i = 0; i < newCategories.length; i++) {
-      const [, category_name] = newCategories[i];
-      apiToDbCategoryIdMap.set(
-        seriesCategories.find(c => c.category_name === category_name).category_id,
-        newId
-      );
-      existingCategoryMap.set(category_name, newId);
-      newId++;
+  // Preencher também o map das já existentes
+  for (const cat of seriesCategories) {
+    if (existingCategoryMap.has(cat.category_name)) {
+      apiToDbCategoryIdMap.set(String(cat.category_id), existingCategoryMap.get(cat.category_name));
     }
   }
 
