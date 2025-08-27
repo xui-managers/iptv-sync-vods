@@ -150,8 +150,9 @@ async function main() {
                 
                 // Inserir na tabela streams
                 const [res] = await connection.query(
-                    "INSERT INTO streams (type, category_id, stream_display_name, stream_source, stream_icon, read_native, `order`, custom_sid, added, gen_timestamps, direct_source, allow_record, probesize_ondemand) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    "INSERT INTO streams (id, type, category_id, stream_display_name, stream_source, stream_icon, read_native, `order`, custom_sid, epg_id, channel_id, added, gen_timestamps, direct_source, allow_record, probesize_ondemand) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     [
+                        i + 1,
                         1,
                         `[${categoryIdMap.get(c.group)}]`,
                         c.name,
@@ -159,6 +160,8 @@ async function main() {
                         c.logo || null,
                         false,
                         i + 1,
+                        c.id || `m3u_${i+1}`,
+                        1, // criar forma para buscar ids diretamente dos epgs existentes
                         c.id || `m3u_${i+1}`,
                         Math.floor(Date.now() / 1000),
                         false,
@@ -195,7 +198,7 @@ async function main() {
                 [`[${normalChannels.join(",")}]`]
             );
             await connection.commit();
-            console.log("Sincronização concluída!");
+            console.log("✅ Sincronização concluída! ✅");
         } catch (err) {
             await connection.rollback();
             throw err;
@@ -207,7 +210,6 @@ async function main() {
         console.error("Erro:", err.message);
     } finally {
         if (dbPool) await dbPool.end();
-        console.log("Pool de conexões encerrado.");
     }
 }
 
