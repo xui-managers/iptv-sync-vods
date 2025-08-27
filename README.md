@@ -33,19 +33,34 @@ Este projeto usa um arquivo chamado .env para guardar configurações (como toke
 
 Encontre o arquivo chamado .env.example para .env
 
-### 3. Abra o arquivo .env e preencha as informações com os seus dados. Exemplo:
+### 3. Abra o arquivo .env.example, renomeie para .env, e preencha as informações com os seus dados. Exemplo:
 ```
-# Configurações da API Xtream Codes
-XTREAM_URL="http://seu-dominio-xtream.com:8080"
-XTREAM_USER="seu_usuario_api"
-XTREAM_PASS="sua_senha_api"
+# Configurações da API Xtream Codes para VODS
+XTREAM_URL_VODS="http://fontedecanais.com:80"
+XTREAM_USER_VODS="seu_usuario_da_fonte"
+XTREAM_PASS_VODS="sua_senha_da_fonte"
+
+# Configurações da API Xtream Codes para canais
+XTREAM_URL_CHANNELS="http://fontedecanais.shop"
+XTREAM_USER_CHANNELS="seu_usuario_da_fonte"
+XTREAM_PASS_CHANNELS="sua_senha_da_fonte"
+
+
+M3U8_PATH="./lista.m3u"
+SYNC_CATEGORIES=true
+USE_IPTV_ORGANIZER=false
 
 # Configurações do Banco de Dados MySQL
 DB_HOST="localhost"
 DB_USER="seu_usuario_db"
 DB_PASSWORD="sua_senha_db"
 DB_NAME="seu_banco_de_dados"
+
+# Apenas se for usar o IPTV Organizer
+TMDB_API_KEY=""
+TMDB_LANGUAGE="pt-BR"
 ```
+
 
 ### 4. Abra o terminal ou prompt de comando dentro da pasta do projeto e execute:
 `npm install`
