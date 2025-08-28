@@ -227,19 +227,37 @@ async function processSeries(connection) {
                 continue;
               
               const movieProperties = JSON.stringify({
-                release_date: ep?.releaseDate || '',
-                plot: ep?.plot || '',
+                release_date: ep?.releaseDate || ep?.info?.releaseDate || '',
+                plot: ep?.plot || ep?.info?.plot || '',
                 duration_secs: ep?.info?.duration_secs || 0,
+                cast: ep?.info.cast,
+                director: ep?.info.director,
                 duration: ep?.info?.duration || '',
                 movie_image: ep?.info?.movie_image || '',
+                youtube_trailer: ep?.info?.youtube_trailer,
                 season: seasonNum,
                 tmdb_id: info?.info?.tmdb_id || ''
               });
 
               streamsValues.push([
-                5, `[${catId || ''}]`, epName, streamSource, ep?.info?.movie_image || '',
-                ep?.plot || '', 0, movieProperties, 0, 'mp4', 0, 0, 1,
-                Math.floor(Date.now() / 1000), seriesId, 'pt-br', null, 0
+                5, //type
+                `[${catId || ''}]`, //category_id
+                epName, //stream_display_name
+                streamSource, //stream_source
+                ep?.info?.movie_image || '', // stream_icon
+                ep?.plot || ep?.info?.plot || '', //notes
+                0, //enable_transcode
+                movieProperties, //movie_properties
+                0, //read_native
+                'mp4', //target_container
+                0, //stream_all
+                0, //remove_subtitles
+                1, //direct_source
+                Math.floor(Date.now() / 1000), //added
+                seriesId, //series_no
+                'pt-br', //tmdb_language
+                parseInt(ep?.info.releasedate?.slice(0, 4)) || null, //year
+                ep?.info?.rating || 0 //rating
               ]);
 
               // Colocamos os valores certinhos para inserir no banco as info dos eps
