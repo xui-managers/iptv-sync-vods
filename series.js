@@ -312,7 +312,7 @@ async function processSeries(connection) {
   if (failCount > 0) console.log(`❌ ${failCount} falhas ao inserir séries.`);
 
   if (newCount > 0) {
-    await updateBouquets(connection, [1, 2], 5);
+    await updateBouquets(connection, 5);
   }
 }
 

@@ -253,7 +253,7 @@ async function processVODs(connection) {
   if (failCount > 0) console.log(`❌ ${failCount} falhas ao inserir filmes.`);
 
   if(newCount > 0) {
-    await updateBouquets(connection, [1, 2], 2);
+    await updateBouquets(connection, 2);
   }
 }
 

@@ -157,7 +157,7 @@ async function processStreams(connection, apiStreams, apiToDbCategoryIdMap) {
     }
 
     if(newStreamsCount > 0) {
-        await updateBouquets(connection, [1,2], 1);
+        await updateBouquets(connection, 1);
     }
     console.log(`✅ ${newStreamsCount} novos canais foram inseridos.`);
     if (skippedStreamsCount > 0) {
