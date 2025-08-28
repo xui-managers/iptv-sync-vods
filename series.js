@@ -4,7 +4,6 @@ const mysql = require('mysql2/promise');
 const updateBouquets = require('./updateBouquets');
 const withRetry = require('./util/with-retry')
 const updateProgress = require('./util/update-progress')
-const logAbove = require('./util/log-above')
 const { chunkArray, defaultChunkSize } = require('./util/chunck-array');
 
 const {
@@ -86,6 +85,7 @@ async function processSeries(connection) {
   }
 
   console.log(`📚 ${seriesList.length} séries encontradas em ${seriesCategories.length} categorias.`);
+  console.log('[======== INICIANDO ========]')
 
   const existingCategoryMap = new Map(existingDbCategories.map(c => [c.category_name, c.id]));
   const apiToDbCategoryIdMap = new Map();
@@ -129,10 +129,11 @@ async function processSeries(connection) {
     seriesMap.set(`${r.title.trim().toLowerCase()}|${r.year || ''}`, r.id);
 
   
-  const chunks = chunkArray(seriesList, rows.length > 4000 ? (defaultChunkSize / 10) : null);
+  const chunks = chunkArray(seriesList);
 
   for (const batch of chunks) {
     updateProgress(newCount + skipCount, seriesList.length);
+
     const requests = batch.map(async series =>
       withRetry(
         async () => {
@@ -142,10 +143,10 @@ async function processSeries(connection) {
           )
           return { series, info: res.data }
         },
-        5,
-        (Math.floor(Math.random() * 10) + 1) * 1000 // 1s a 10s
+        60000,     // delay inicial = 2s
+        600000    // delay máximo = 10 min
       ).catch(error => ({ series, error }))
-    );
+    )
 
     const results = await Promise.all(requests);
 
