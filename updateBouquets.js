@@ -37,7 +37,7 @@ async function updateBouquets(connection, bouquetIds, type) {
       [JSON.stringify(novosIds), bouquetId]
     );
 
-    console.log(`✅ Bouquet ID ${bouquetId} atualizado com ${merge.length} conteudos.`);
+    console.log(`✅ Bouquet ID ${bouquetId} s.`);
   }
 }
 

@@ -3,6 +3,8 @@ const axios = require('axios');
 const mysql = require('mysql2/promise');
 const updateBouquets = require('./updateBouquets');
 const withRetry = require('./util/with-retry')
+const updateProgress = require('./util/update-progress')
+const logAbove = require('./util/log-above')
 const { chunkArray, defaultChunkSize } = require('./util/chunck-array');
 
 const {
@@ -130,8 +132,7 @@ async function processSeries(connection) {
   const chunks = chunkArray(seriesList, rows.length > 4000 ? (defaultChunkSize / 10) : null);
 
   for (const batch of chunks) {
-    console.log(`📦 Processando lote com ${batch.length} séries...\nSeries processadas até o momento: ${newCount + skipCount}`);
-
+    updateProgress(newCount + skipCount, seriesList.length);
     const requests = batch.map(async series =>
       withRetry(
         async () => {
@@ -168,6 +169,7 @@ async function processSeries(connection) {
       let seriesId = null;
 
       if(!existing || existing.length === 0) {
+        newCount++;
         console.log(`🎭 Nova série: ${series.name} (${releaseYear})`);
 
         const [insertRes] = await connection.query(`
@@ -194,6 +196,7 @@ async function processSeries(connection) {
         );
         seriesId = insertRes.insertId;
       } else {
+        skipCount++;
         seriesId = existing;
       }
 

@@ -4,6 +4,7 @@ const mysql = require('mysql2/promise');
 const updateBouquets = require('./updateBouquets');
 const { chunkArray } = require('./util/chunck-array');
 const { organizeMovies, categorizeMovies } = require('iptv-vod-organizer');
+const updateProgress = require('./util/update-progress');
 
 // --- Mapeamento customizado de categorias
 const categoryNameMap = {
@@ -120,7 +121,6 @@ async function processVODs(connection) {
   let failCount = 0;
 
   for (const batch of chunks) {
-    console.log(`📦 Processando lote com ${batch.length} filmes...`);
     // ⚡ Executa 100 requisições concorrentes
     const requests = batch.filter(vod => {
         const key = `${vod.name}:${String(vod.stream_id)}`;
@@ -229,6 +229,7 @@ async function processVODs(connection) {
         failCount += values.length;
       }
     }
+    updateProgress(newCount + skipCount, vodStreams.length);
   }
 
   if(USE_IPTV_ORGANIZER === 'true') {
