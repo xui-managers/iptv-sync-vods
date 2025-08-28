@@ -141,7 +141,7 @@ async function processSeries(connection) {
           )
           return { series, info: res.data }
         },
-        3,
+        5,
         (Math.floor(Math.random() * 10) + 1) * 1000 // 1s a 10s
       ).catch(error => ({ series, error }))
     );
@@ -245,7 +245,7 @@ async function processSeries(connection) {
                 epName, //stream_display_name
                 streamSource, //stream_source
                 ep?.info?.movie_image || '', // stream_icon
-                ep?.plot || ep?.info?.plot || '', //notes
+                '', //notes
                 0, //enable_transcode
                 movieProperties, //movie_properties
                 0, //read_native
