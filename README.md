@@ -1,6 +1,14 @@
-# 📦 Channels Sync for XUI.one
+# 📦 IPTV Sync VODS/Channels
 
-Este é um projeto simples feito em Node.js. Ele pode ser usado para sincronizar canais dentro do XUI.one, tanto novos canais como sincronizar a base inteira.
+Este é um projeto para sincronizar canais, filmes e séries dentro do XUI.one através da fonte que você já tem.
+
+O motivo dele ser criado é criar soluções para que seja feito de forma prática essa sincronização, sem lentidão, ou demora. 
+Alguns sincronizadores demoram mais de 17 horas para sincronizar, o que é completamente incompatível com a realidade.
+
+Nesse sincronizador:
+Filmes
+PRIMEIRA sincronização: 25 minutos
+Sincronização complementar: 20 segundos
 
 ---
 
@@ -25,13 +33,13 @@ Você pode fazer isso de duas formas:
 - **Opção 1:** Baixe o ZIP do projeto e extraia em uma pasta.
 - **Opção 2:** Se souber usar o Git, rode:
   ```bash
-  git clone https://github.com/seu-usuario/seu-projeto.git
+  git clone https://github.com/xui-managers/iptv-sync-vods
   ```
 
 ### 2. Renomeie o arquivo .env.example
-Este projeto usa um arquivo chamado .env para guardar configurações (como tokens, URLs e senhas).
+Este projeto usa um arquivo chamado .env para guardar configurações
 
-Encontre o arquivo chamado .env.example para .env
+Renomeie o arquivo chamado .env.example para .env
 
 ### 3. Abra o arquivo .env.example, renomeie para .env, e preencha as informações com os seus dados. Exemplo:
 ```
