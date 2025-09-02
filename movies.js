@@ -185,8 +185,10 @@ async function processVODs(connection, useAlternative = false) {
       const { vod, info } = result;
 
       const vodId = `${hostname}_${vod.stream_id}`;
-      const key = `${vod.name}:${vodId}`;
-      if (existingVodKeys.has(key)) {
+      const year = vod?.year ? vod.year : parseInt(info?.release_date?.slice(0, 4)) || null;
+      // Confirma novamente, pois pode ter vindo o ano da API interna do TMDB
+      const keyWithYear = `${vod?.title?.toLowerCase() ?? vod.name?.toLowerCase()}:${year}`;
+      if (existingVodKeysWithYear.has(keyWithYear)) {
         skipCount++;
         continue;
       }
@@ -207,7 +209,7 @@ async function processVODs(connection, useAlternative = false) {
         parseFloat(info?.rating) || 0,
         info?.tmdb_id ?? vod.tmdb_id ?? null,
         null,
-        vod?.year ? vod.year : parseInt(info?.release_date?.slice(0, 4)) || null,
+        year,
         0,
         'pt-br',
         1,
