@@ -158,7 +158,7 @@ async function searchMoviesBySimilarity(name, year, vod) {
 
       return { movie, score };
     })
-    .filter(c => c.score > 0.6) // só pega parecido
+    .filter(c => c.score > 0.75) // só pega parecido
     .sort((a, b) => b.score - a.score); // do mais parecido pro menos
 
   return candidates.map(c => c.movie);
