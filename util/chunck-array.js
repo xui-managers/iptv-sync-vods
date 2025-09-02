@@ -5,7 +5,7 @@
  * Sugiro testar conforme você prefere.
  * Por padrão, deixo 200, porém ela é adaptável
  */
-let defaultChunkSize = 200;
+let defaultChunkSize = 100;
 
 function chunkArray(array, chunkSize) {
   chunkSize = chunkSize ?? defaultChunkSize;

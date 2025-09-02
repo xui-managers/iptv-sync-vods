@@ -1,3 +1,4 @@
 node_modules
 .env
 *.m3u
+prisma/tmdb_cache.db
