@@ -8,6 +8,7 @@ const { categorizeMovies } = require('iptv-vod-organizer');
 const extractNameAndYear = require('./util/extract-name-year');
 const updateProgress = require('./util/update-progress');
 const normalizeName = require('./util/normalize-name');
+const isInvalidVodName = require('./util/is-invalid.vod');
 
 // --- Mapeamento customizado de categorias
 const categoryNameMap = {
@@ -149,6 +150,11 @@ async function processVODs(connection, useAlternative = false) {
   for (const batch of chunks) {
   const requests = batch
     .filter(vod => {
+      // Ignorando vods que contenham nomes incorretos, com URLs, etc (mal inserção da fonte)
+      if(isInvalidVodName(vod?.title ?? vod?.name)) {
+        skipCount++;
+        return false;
+      }
       // Verificação básica de duplicidade
       const key = `${vod?.title ?? vod.name}:${hostname}_${vod.stream_id}`;
       if (existingVodKeys.has(key)) {
