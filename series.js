@@ -5,12 +5,16 @@ const updateBouquets = require('./updateBouquets');
 const withRetry = require('./util/with-retry')
 const updateProgress = require('./util/update-progress')
 const { chunkArray, defaultChunkSize } = require('./util/chunck-array');
+const { prepareVodUpdate } = require('./util/notify-vod-update');
+const { getLaunchInfo, updateLaunchInfo } = require('./util/upsert-launch-info');
 
 const {
-  XTREAM_URL_VODS, XTREAM_USER_VODS, XTREAM_PASS_VODS,
+  XTREAM_URL_VODS, XTREAM_USER_VODS, XTREAM_PASS_VODS, SYNC_ONLY_NEW_SERIES_UPDATES,
   DB_HOST, DB_USER, DB_PASSWORD, DB_NAME
 } = process.env;
 
+const syncOnlyNewUpdates = SYNC_ONLY_NEW_SERIES_UPDATES === true || SYNC_ONLY_NEW_SERIES_UPDATES === 'true';
+const hostname = new URL(XTREAM_URL_VODS).hostname;
 const xtreamApiUrl = `${XTREAM_URL_VODS}/player_api.php?username=${XTREAM_USER_VODS}&password=${XTREAM_PASS_VODS}`;
 
 if (!XTREAM_URL_VODS || !XTREAM_USER_VODS || !XTREAM_PASS_VODS || !DB_HOST || !DB_USER || !DB_PASSWORD || !DB_NAME) {
@@ -53,7 +57,13 @@ async function main() {
   } finally {
     if (dbPool) 
       await dbPool.end();
-    
+
+    await updateLaunchInfo({
+      userId: 0,
+      username: XTREAM_USER_VODS,
+      hostname,
+      lastUpdate: Math.floor(startDate.getTime() / 1000)
+    })
     const endDate = new Date();
 
     const diffMs = endDate - startDate; // diferença em ms
@@ -65,6 +75,7 @@ async function main() {
     console.log(`⏰ Fim: ${endDate.getHours()}:${endDate.getMinutes()}`);
     console.log(`⏰ Tempo sincronizando: ${minutes}m ${seconds}s`);
     console.log("🛑 Fim do processo.");
+    process.exit(0);
   }
 }
 
@@ -78,13 +89,31 @@ async function processSeries(connection) {
   ]);
 
   const seriesCategories = categoriesRes.data;
-  const seriesList = seriesRes.data;
+  let seriesList = seriesRes.data;
 
   if (!Array.isArray(seriesCategories) || !Array.isArray(seriesList)) {
     throw new Error("A resposta da API está inválida.");
   }
 
-  console.log(`📚 ${seriesList.length} séries encontradas em ${seriesCategories.length} categorias.`);
+  // Aqui buscamos series que foram atualizadas após a ultima sincronização apenas, evitamos chamadas para fonte atoa
+  if(syncOnlyNewUpdates && seriesList[0].last_modified) {
+    const info = await getLaunchInfo({
+      username: XTREAM_USER_VODS,
+      userId: 0,
+      hostname,
+    });
+    if(info.lastUpdate !== null) {
+      seriesList = seriesList.filter(series => {
+          return series.last_modified > info.lastUpdate;
+      });
+    }
+  }
+
+  if(syncOnlyNewUpdates) {
+    console.log(`📚 ${seriesList.length} séries com atualização encontradas.`);
+  } else {
+    console.log(`📚 ${seriesList.length} séries encontradas em ${seriesCategories.length} categorias.`);
+  }
   console.log('[======== INICIANDO ========]')
 
   const existingCategoryMap = new Map(existingDbCategories.map(c => [c.category_name, c.id]));
@@ -171,7 +200,13 @@ async function processSeries(connection) {
 
       if(!existing || existing.length === 0) {
         newCount++;
-        console.log(`🎭 Nova série: ${series.name} (${releaseYear})`);
+        prepareVodUpdate(
+          {
+            type: "new",
+            name: `${series.name} (${releaseYear})`
+          }, 
+          "serie"
+        );
 
         const [insertRes] = await connection.query(`
           INSERT INTO streams_series 
@@ -302,12 +337,10 @@ async function processSeries(connection) {
           }
         }
       }
-
-      newCount++;
     }
   }
 
-  console.log(`✅ ${newCount} novas séries inseridas.`);
+  console.log(`\n✅ ${newCount} novas séries inseridas.`);
   console.log(`⏭️ ${skipCount} séries já existiam.`);
   if (failCount > 0) console.log(`❌ ${failCount} falhas ao inserir séries.`);
 

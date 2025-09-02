@@ -1,7 +1,7 @@
 const updates = [];
 
-async function notifyVodUpdate(item, type) {
+async function prepareVodUpdate(item, type) {
     updates.push(item);
 }
 
-module.exports = {updates, notifyVodUpdate};
+module.exports = {updates, prepareVodUpdate};
