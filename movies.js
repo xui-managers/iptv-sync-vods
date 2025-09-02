@@ -146,11 +146,11 @@ async function processVODs(connection, useAlternative = false) {
   let failCount = 0;
 
   updateProgress(0, vodStreams.length);
-for (const batch of chunks) {
+  for (const batch of chunks) {
   const requests = batch
     .filter(vod => {
       // Verificação básica de duplicidade
-      const key = `${vod.name}:${hostname}_${vod.stream_id}`;
+      const key = `${vod?.title ?? vod.name}:${hostname}_${vod.stream_id}`;
       if (existingVodKeys.has(key)) {
         skipCount++;
         return false;
