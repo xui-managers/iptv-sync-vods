@@ -4,18 +4,17 @@ const mysql = require('mysql2/promise');
 const updateBouquets = require('./updateBouquets');
 const withRetry = require('./util/with-retry')
 const updateProgress = require('./util/update-progress')
-const { chunkArray, defaultChunkSize } = require('./util/chunck-array');
+const { chunkArray } = require('./util/chunck-array');
 const { prepareVodUpdate } = require('./util/notify-vod-update');
 const { getLaunchInfo, updateLaunchInfo } = require('./util/upsert-launch-info');
 
 const {
-  XTREAM_URL_VODS, XTREAM_USER_VODS, XTREAM_PASS_VODS, SYNC_ONLY_NEW_SERIES_UPDATES,
-  DB_HOST, DB_USER, DB_PASSWORD, DB_NAME
+  XTREAM_URL_VODS, XTREAM_USER_VODS, XTREAM_PASS_VODS, 
+  XTREAM_URL_VODS_ALT, XTREAM_USER_VODS_ALT, XTREAM_PASS_VODS_ALT, 
+  SYNC_ONLY_NEW_SERIES_UPDATES, DB_HOST, DB_USER, DB_PASSWORD, DB_NAME
 } = process.env;
 
 const syncOnlyNewUpdates = SYNC_ONLY_NEW_SERIES_UPDATES === true || SYNC_ONLY_NEW_SERIES_UPDATES === 'true';
-const hostname = new URL(XTREAM_URL_VODS).hostname;
-const xtreamApiUrl = `${XTREAM_URL_VODS}/player_api.php?username=${XTREAM_USER_VODS}&password=${XTREAM_PASS_VODS}`;
 
 if (!XTREAM_URL_VODS || !XTREAM_USER_VODS || !XTREAM_PASS_VODS || !DB_HOST || !DB_USER || !DB_PASSWORD || !DB_NAME) {
   console.error("ERRO: Configure corretamente todas as variáveis no arquivo .env.");
@@ -25,6 +24,7 @@ if (!XTREAM_URL_VODS || !XTREAM_USER_VODS || !XTREAM_PASS_VODS || !DB_HOST || !D
 
 async function main() {
   const startDate = new Date();
+  let useAlternative = false;
   console.log("📺 Iniciando sincronização de séries...");
 
   let dbPool;
@@ -42,6 +42,10 @@ async function main() {
 
     try {
       await processSeries(connection);
+      if(XTREAM_URL_VODS_ALT && XTREAM_URL_VODS_ALT != '') {
+        useAlternative = true;
+        await processSeries(connection, true);
+      }
       console.log("✅ Processamento de séries finalizado.");
     } catch (err) {
       if(err.message.includes('read properties')) {
@@ -58,9 +62,10 @@ async function main() {
     if (dbPool) 
       await dbPool.end();
 
+    const hostname = new URL(useAlternative ? XTREAM_URL_VODS_ALT : XTREAM_URL_VODS).hostname;
     await updateLaunchInfo({
       userId: 0,
-      username: XTREAM_USER_VODS,
+      username: useAlternative ? XTREAM_USER_VODS_ALT : XTREAM_USER_VODS,
       hostname,
       lastUpdate: Math.floor(startDate.getTime() / 1000)
     })
@@ -79,7 +84,11 @@ async function main() {
   }
 }
 
-async function processSeries(connection) {
+async function processSeries(connection, useAlternative = false) {
+  const hostname = new URL(useAlternative ? XTREAM_URL_VODS_ALT : XTREAM_URL_VODS).hostname;
+  const xtreamApiUrl = `${useAlternative ? XTREAM_URL_VODS_ALT : XTREAM_URL_VODS}/player_api.php?username=${useAlternative ? XTREAM_USER_VODS_ALT : XTREAM_USER_VODS}&password=${useAlternative ? XTREAM_PASS_VODS_ALT : XTREAM_PASS_VODS}`;
+
+
   console.log("🔄 Buscando categorias e séries da API...");
 
   const [categoriesRes, seriesRes, [existingDbCategories]] = await Promise.all([
@@ -98,7 +107,7 @@ async function processSeries(connection) {
   // Aqui buscamos series que foram atualizadas após a ultima sincronização apenas, evitamos chamadas para fonte atoa
   if(syncOnlyNewUpdates && seriesList[0].last_modified) {
     const info = await getLaunchInfo({
-      username: XTREAM_USER_VODS,
+      username: useAlternative ? XTREAM_USER_VODS_ALT : XTREAM_USER_VODS,
       userId: 0,
       hostname,
     });
@@ -259,7 +268,7 @@ async function processSeries(connection) {
           for (const ep of season) {
             try {
               const epName = ep?.title ?? `S${seasonNum}E${ep.episode_num} - ${series?.title ?? series.name}`;
-              const streamSource = JSON.stringify([`${XTREAM_URL_VODS}/series/${XTREAM_USER_VODS}/${XTREAM_PASS_VODS}/${ep.id}.${ep.container_extension}`]);
+              const streamSource = JSON.stringify([`${useAlternative ? XTREAM_URL_VODS_ALT : XTREAM_URL_VODS}/series/${useAlternative ? XTREAM_USER_VODS_ALT : XTREAM_USER_VODS}/${useAlternative ? XTREAM_PASS_VODS_ALT : XTREAM_PASS_VODS}/${ep.id}.${ep.container_extension}`]);
 
               // Caso o episodio já exista no banco de dados, ignora todo o restante e prossegue
               if(existingMap.has(`${seasonNum}-${ep.episode_num}`))
