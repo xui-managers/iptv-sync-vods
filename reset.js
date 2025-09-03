@@ -25,7 +25,7 @@ const tipos = {
   5: "series"
 };
 
-async function main() {
+export async function initializeReset() {
   try {
     // Menu interativo
     const { tipo } = await inquirer.prompt([
@@ -47,6 +47,13 @@ async function main() {
 
     // Deletar da tabela principal
     await connection.query("DELETE FROM streams WHERE type = ?", [tipo]);
+    if(tipo === 1) {
+      await connection.query("DELETE FROM streams_categories WHERE type = 'live'");
+    } else if(tipo === 2) {
+      await connection.query("DELETE FROM streams_categories WHERE type = 'movie'");
+    } else if(tipo === 4) {
+      await connection.query("DELETE FROM streams_categories WHERE type = 'radio'");
+    }
 
     // Se for series, também limpar as tabelas relacionadas
     if (tipo === 5) {
@@ -54,6 +61,7 @@ async function main() {
       await connection.query("ALTER TABLE streams_series AUTO_INCREMENT = 1");
       await connection.query("DELETE FROM streams_episodes");
       await connection.query("ALTER TABLE streams_episodes AUTO_INCREMENT = 1");
+      await connection.query("DELETE FROM streams_categories WHERE type = 'series'");
     } else if(tipo === 9) {
       await connection.query("DELETE FROM streams");
       await connection.query("ALTER TABLE streams AUTO_INCREMENT = 1");
@@ -62,6 +70,7 @@ async function main() {
       await connection.query("ALTER TABLE streams_series AUTO_INCREMENT = 1");
       await connection.query("DELETE FROM streams_episodes");
       await connection.query("ALTER TABLE streams_episodes AUTO_INCREMENT = 1");
+      await connection.query("DELETE FROM streams_categories WHERE id is NOT NULL");
     }
 
     console.log(`✅ Registros de ${tipos[tipo]} deletados com sucesso!`);
@@ -72,4 +81,4 @@ async function main() {
   }
 }
 
-main();
+initializeReset();
