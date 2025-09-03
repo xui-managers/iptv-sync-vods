@@ -42,6 +42,14 @@ async function initializeSeries() {
 
     try {
       await processSeries(connection);
+      
+      const hostname = new URL(XTREAM_URL_VODS).hostname;
+      await updateLaunchInfo({
+        userId: 0,
+        username: XTREAM_USER_VODS,
+        hostname,
+        lastUpdate: Math.floor(startDate.getTime() / 1000)
+      })
       if(XTREAM_URL_VODS_ALT && XTREAM_URL_VODS_ALT != '') {
         useAlternative = true;
         await processSeries(connection, true);
