@@ -23,7 +23,7 @@ const tipos = {
   2: "movies",
   4: "radios",
   5: "series",
-  5: "tudo"
+  9: "tudo"
 };
 
 export async function initializeReset() {

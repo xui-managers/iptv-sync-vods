@@ -3,3 +3,4 @@ node_modules
 *.m3u
 prisma/tmdb_cache.db
 launch-info.json
+node-portable

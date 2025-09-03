@@ -29,7 +29,7 @@ if (!XTREAM_URL_VODS || !XTREAM_USER_VODS || !XTREAM_PASS_VODS || !DB_HOST || !D
   process.exit(1);
 }
 
-async function main() {
+async function initializeMovies() {
   const startDate = new Date();
   console.log("📽️ Iniciando sincronização de filmes (VODs)...");
 
@@ -248,7 +248,7 @@ async function processVODs(connection, useAlternative = false) {
   const firstId = insertedIds[0]
   const lastId = insertedIds[insertedIds.length - 1];
 
-  if(insertedIds.length > 0 ){ 
+  if(insertedIds.length > 0 && (USE_IPTV_ORGANIZER=='true' || USE_IPTV_ORGANIZER == true)){ 
     console.log("🔄 Atualizando categorias dos filmes inseridos via IPTV-ORGANIZER...");
     const [rows] = await connection.query(
       `SELECT id, category_id, stream_display_name, movie_properties, year, tmdb_id
@@ -268,4 +268,4 @@ async function processVODs(connection, useAlternative = false) {
   }
 }
 
-main();
+module.exports = initializeMovies;
