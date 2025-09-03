@@ -22,7 +22,8 @@ const tipos = {
   1: "channels",
   2: "movies",
   4: "radios",
-  5: "series"
+  5: "series",
+  5: "tudo"
 };
 
 export async function initializeReset() {
@@ -48,11 +49,11 @@ export async function initializeReset() {
     // Deletar da tabela principal
     await connection.query("DELETE FROM streams WHERE type = ?", [tipo]);
     if(tipo === 1) {
-      await connection.query("DELETE FROM streams_categories WHERE type = 'live'");
+      await connection.query("DELETE FROM streams_categories WHERE category_type = 'live'");
     } else if(tipo === 2) {
-      await connection.query("DELETE FROM streams_categories WHERE type = 'movie'");
+      await connection.query("DELETE FROM streams_categories WHERE category_type = 'movie'");
     } else if(tipo === 4) {
-      await connection.query("DELETE FROM streams_categories WHERE type = 'radio'");
+      await connection.query("DELETE FROM streams_categories WHERE category_type = 'radio'");
     }
 
     // Se for series, também limpar as tabelas relacionadas
@@ -61,7 +62,7 @@ export async function initializeReset() {
       await connection.query("ALTER TABLE streams_series AUTO_INCREMENT = 1");
       await connection.query("DELETE FROM streams_episodes");
       await connection.query("ALTER TABLE streams_episodes AUTO_INCREMENT = 1");
-      await connection.query("DELETE FROM streams_categories WHERE type = 'series'");
+      await connection.query("DELETE FROM streams_categories WHERE category_type = 'series'");
     } else if(tipo === 9) {
       await connection.query("DELETE FROM streams");
       await connection.query("ALTER TABLE streams AUTO_INCREMENT = 1");
