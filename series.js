@@ -22,7 +22,7 @@ if (!XTREAM_URL_VODS || !XTREAM_USER_VODS || !XTREAM_PASS_VODS || !DB_HOST || !D
 }
 
 
-async function main() {
+async function initializeSeries() {
   const startDate = new Date();
   let useAlternative = false;
   console.log("📺 Iniciando sincronização de séries...");
@@ -358,4 +358,5 @@ async function processSeries(connection, useAlternative = false) {
   }
 }
 
-main();
+
+module.exports = initializeSeries;
