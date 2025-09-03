@@ -82,5 +82,3 @@ export async function initializeReset() {
     await connection.end();
   }
 }
-
-initializeReset();

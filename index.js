@@ -3,6 +3,7 @@ import chalk from "chalk";
 import initializeMovies from "./movies.js";
 import initializeSeries from "./series.js";
 import initializeChannels from "./channels.js";
+import { initializeReset } from "./reset.js";
 
 function showBanner() {
   console.log(chalk.greenBright(`
@@ -30,21 +31,39 @@ async function mainMenu() {
       choices: [
         { name: "📽️  Sincronizar filmes", value: "filmes" },
         { name: "📺  Sincronizar séries", value: "series" },
-        { name: "📺  Deletar e sincronizar todos os canais", value: "channels" },
+        { name: "⚠️  Deletar e sincronizar todos os canais", value: "channels" },
+        { name: "✨  Sistema de limpeza XUI", value: "reset" },
         { name: "❌  Fechar aplicação", value: "sair" }
       ]
     }
   ]);
 
+  let nova = false;
+  if(escolha === 'filmes' || escolha === 'series') {
+    // Pergunta adicional (true/false)
+    const { nova: response } = await inquirer.prompt([
+        {
+            type: "confirm",
+            name: "nova",
+            message: "Deseja marcar como sincronização nova?\nAutomaticamente será limpo o banco de dados desse tipo de stream.",
+            default: false
+        }
+    ]);
+    nova = response;
+  }
+
   switch (escolha) {
     case "filmes":
-      await initializeMovies();
+      await initializeMovies(nova);
       break;
     case "series":
-      await initializeSeries();
+      await initializeSeries(nova);
       break;
     case "channels":
       await initializeChannels();
+      break;
+    case "reset":
+      await initializeReset();
       break;
     case "sair":
       console.log("\n👋 Saindo da aplicação...\n");
