@@ -183,7 +183,7 @@ async function processSeries(connection) {
       const { series, info } = result;
       const releaseYear = info?.info?.releaseDate?.slice(0, 4) || null;
 
-      const keySerie = `${series.name.trim().toLowerCase()}|${releaseYear || ''}`;
+      const keySerie = `${series?.title?.trim()?.toLowerCase() || series?.name?.trim()?.toLowerCase()}|${releaseYear || ''}`;
       const existing = seriesMap.get(keySerie);
 
       if (result.error) {
@@ -213,7 +213,7 @@ async function processSeries(connection) {
           (title, category_id, cover, cover_big, genre, plot, cast, rating, director, release_date, tmdb_id, episode_run_time, backdrop_path, youtube_trailer, year)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
-            series.name,
+            series?.title ?? series.name,
             `[${catId || ''}]`,
             info.info.cover || '',
             info.info.cover_big || '',
@@ -258,7 +258,7 @@ async function processSeries(connection) {
 
           for (const ep of season) {
             try {
-              const epName = `S${seasonNum}E${ep.episode_num} - ${ep.title || series.name}`;
+              const epName = ep?.title ?? `S${seasonNum}E${ep.episode_num} - ${series?.title ?? series.name}`;
               const streamSource = JSON.stringify([`${XTREAM_URL_VODS}/series/${XTREAM_USER_VODS}/${XTREAM_PASS_VODS}/${ep.id}.${ep.container_extension}`]);
 
               // Caso o episodio já exista no banco de dados, ignora todo o restante e prossegue
