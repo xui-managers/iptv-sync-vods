@@ -29,7 +29,7 @@ if (!XTREAM_URL_VODS || !XTREAM_USER_VODS || !XTREAM_PASS_VODS || !DB_HOST || !D
   process.exit(1);
 }
 
-async function initializeMovies() {
+async function initializeMovies(isNewSync = false) {
   const startDate = new Date();
   console.log("📽️ Iniciando sincronização de filmes (VODs)...");
 
@@ -45,8 +45,15 @@ async function initializeMovies() {
     });
 
     const connection = await dbPool.getConnection();
-
+    
     try {
+      if(isNewSync) {
+        console.log('Limpando banco de dados dos filmes.');
+        await connection.query("DELETE FROM streams WHERE type = 2");
+        await connection.query("DELETE FROM streams_categories WHERE category_type = 'movie'");
+        console.log('Banco de dados limpo, iniciando...');
+      }
+      
       await processVODs(connection);
       if(XTREAM_URL_VODS_ALT && XTREAM_URL_VODS_ALT != '') {
         await processVODs(connection, true);

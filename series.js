@@ -22,7 +22,7 @@ if (!XTREAM_URL_VODS || !XTREAM_USER_VODS || !XTREAM_PASS_VODS || !DB_HOST || !D
 }
 
 
-async function initializeSeries() {
+async function initializeSeries(isNewSync = false) {
   const startDate = new Date();
   let useAlternative = false;
   console.log("📺 Iniciando sincronização de séries...");
@@ -41,6 +41,15 @@ async function initializeSeries() {
     const connection = await dbPool.getConnection();
 
     try {
+      if(isNewSync === true) {
+        console.log('Limpando banco de dados dos séries.');
+        await connection.query("DELETE FROM streams_series");
+        await connection.query("ALTER TABLE streams_series AUTO_INCREMENT = 1");
+        await connection.query("DELETE FROM streams_episodes");
+        await connection.query("ALTER TABLE streams_episodes AUTO_INCREMENT = 1");
+        await connection.query("DELETE FROM streams_categories WHERE category_type = 'series'");
+        console.log('Banco de dados limpo, iniciando...');
+      }
       await processSeries(connection);
       
       const hostname = new URL(XTREAM_URL_VODS).hostname;
