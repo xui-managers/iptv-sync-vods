@@ -72,6 +72,7 @@ export async function initializeReset() {
       await connection.query("DELETE FROM streams_episodes");
       await connection.query("ALTER TABLE streams_episodes AUTO_INCREMENT = 1");
       await connection.query("DELETE FROM streams_categories WHERE id is NOT NULL");
+      await connection.query("ALTER TABLE streams_categories AUTO_INCREMENT = 1");
     }
 
     console.log(`✅ Registros de ${tipos[tipo]} deletados com sucesso!`);
