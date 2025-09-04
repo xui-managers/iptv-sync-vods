@@ -10,8 +10,10 @@ generator client {
 model MovieCache {
   id         Int      @id @default(autoincrement())
   name       String
+  hostname   String?
+  stream_id  String?
   year       String
-  tmdb_id    String   @unique
+  tmdb_id    String?   @unique
   data       String
   updatedAt  DateTime @updatedAt
   createdAt  DateTime @default(now())

@@ -11,23 +11,43 @@ const execAsync = util.promisify(exec);
 let allMovies = [];
 let hasCache = false;
 
-async function getMovieInfoCL({tmdbId, name, year, vod, category_name}) {
+async function getMovieInfoCL({tmdbId, name, year, vod, category_name, url, username, password}) {
     try {  
+        if(name.includes('Mutantes')) {
+          console.log(vod);
+        }
+        const hostname = new URL(url).hostname;
         // Ignora filmes adultos para ser mais rapido, já que a maioria não tem TMDB
         if(name.toLowerCase().includes('[xxx]')  || name.toLowerCase().includes('xxx ') || name.toLowerCase().includes('[adulto]') || name.includes('+18') || category_name?.toLowerCase()?.includes('adulto')) {
             return null;
         }
         let data = null;
-        const exist = await getMovieFromDbOrSimilarity({
-            tmdbId,
-            name,
-            year,
-            vod,
-        });
-        if(exist) {
-            return exist;
-        }
         
+        // 1️⃣ Tenta buscar pelo tmdb_id
+        if (tmdbId) {
+          const movie = allMovies.find((i) => i.tmdb_id === tmdbId.toString());
+          if (movie) {
+            
+              if(vod?.name.includes('Profundo') || vod?.name.includes('profundo')) {
+                console.log('tmdbid')
+                console.log(vod);
+              }
+              return JSON.parse(movie.data);
+          }
+        }
+
+        // tenta buscar por stream_id e hostname
+        const movieS = allMovies.find((i) => i.hostname === hostname && i.stream_id == `${vod.stream_id}`);
+        if (movieS) {
+            return JSON.parse(movieS.data);
+        }
+
+        // tenta buscar por nome e ano no db igual
+        const movie = allMovies.find((i) => i.name === name && i.year == year);
+        if (movie) {
+            return JSON.parse(movie.data);
+        }
+
         const apiKey = process.env.TMDB_API_KEY;
         // 1. Tenta buscar pelo tmdbId
         if (tmdbId) {
@@ -53,13 +73,32 @@ async function getMovieInfoCL({tmdbId, name, year, vod, category_name}) {
             if (res.ok) {
                 const result = await res.json();
                 if (result.results.length > 0) {
-                    data = result.results[0]; // pega o mais relevante
+                    data = result.results[0];
                 }
             }
         }
+
+        /*
+        // Removido similiaridade para ficar mais rapido os pulls, necessário mais testes.
+        const exist = await getMovieFromDbOrSimilarity({
+            tmdbId,
+            name,
+            year,
+            vod,
+          });
+          if(exist) {
+            return exist;
+        }*/
+        // Caso mesmo assim, ele nao ache, ele usa a API normal, e ai gera os properties a partir dela.
+        if(!data) {
+            const urlReq = `${url}/player_api.php?username=${username}&password=${password}&action=get_vod_info&vod_id=${vod.stream_id}`;
+            const { data } = await axios.get(urlReq, { timeout: 10000 });
+            
+            return await saveMoviePropertiesByXUI(data, vod, hostname);
+        }
         
         if(data) {
-            return saveMovieProperties(data, vod);
+            return await saveMovieProperties(data, vod, hostname);
         }
         return null;
     } catch (error) {
@@ -115,7 +154,7 @@ function prepareMovieProperties(tmdbData, vod) {
   };
 }
 
-async function saveMovieProperties(tmdbData, vod) {
+async function saveMovieProperties(tmdbData, vod, hostname) {
   const movieProperties = prepareMovieProperties(tmdbData, vod);
 
   // insere ou atualiza
@@ -123,13 +162,69 @@ async function saveMovieProperties(tmdbData, vod) {
     where: { tmdb_id: movieProperties.tmdb_id },
     update: {
         name: movieProperties.name,
-        year: new Date(movieProperties.release_date).getFullYear()?.toString() ?? '',
+        year: new Date(movieProperties?.release_date)?.getFullYear()?.toString() ?? '',
         tmdb_id: movieProperties.tmdb_id,
         data: JSON.stringify(movieProperties)
     },
     create: {
-        name: movieProperties.name,
-        year: new Date(movieProperties.release_date).getFullYear()?.toString() ?? '',
+        name: vod?.title ?? vod.name,
+        hostname,
+        stream_id: `${vod.stream_id ?? ''}`,
+        year: new Date(movieProperties.release_date)?.getFullYear()?.toString() ?? '',
+        tmdb_id: movieProperties.tmdb_id,
+        data: JSON.stringify(movieProperties)
+    }
+  });
+  return movieProperties;
+}
+
+async function saveMoviePropertiesByXUI(xuiData, vod, hostname) {
+        if(vod.name.includes('Stitch')) {
+          console.log(data);
+        }
+
+  const movieProperties = {
+    kinopoisk_url: xuiData?.info?.kinopoisk_url || '',
+    tmdb_id: xuiData?.info?.id?.toString() ?? vod?.tmdb_id ?? '',
+    name: xuiData?.info?.name ?? vod?.name ?? '',
+    o_name: xuiData?.info?.original_title ?? '',
+    cover_big: xuiData?.info?.cover_big ?? xuiData?.info?.backdrop ?? '',
+    movie_image: xuiData?.info?.movie_image ?? '',
+    release_date: xuiData?.info?.release_date ?? vod?.release_date ?? '',
+    episode_run_time: xuiData?.info?.episode_run_time ?? '',
+    youtube_trailer: xuiData?.info?.youtube_trailer ?? '',
+    director: xuiData?.info?.director ?? '',
+    cast: xuiData?.info?.cast ?? '',
+    description: xuiData?.info?.description ?? '',
+    plot: xuiData?.info?.plot ?? '',
+    country: xuiData?.info?.country ?? '',
+    genre: xuiData?.info?.genres ?? '',
+    backdrop_path: xuiData?.info?.backdrop_path
+      ? xuiData?.info?.backdrop_path
+      : [],
+    duration_secs: xuiData?.info?.duration_secs ?? '',
+    duration: xuiData?.info?.duration ?? '',
+    runtime: xuiData?.info?.runtime ?? '',
+    video: xuiData?.info?.video ?? [],
+    audio: xuiData?.info?.audio ?? [],
+    bitrate: xuiData?.info?.bitrate ?? 0,
+    rating: xuiData?.info?.vote_average?.toString() ?? '0',
+  };
+
+  // insere ou atualiza
+  await prisma.movieCache.upsert({
+    where: { tmdb_id: movieProperties.tmdb_id },
+    update: {
+        name: vod?.title ?? vod?.name,
+        year: new Date(movieProperties.release_date)?.getFullYear()?.toString() ?? '',
+        tmdb_id: movieProperties.tmdb_id,
+        data: JSON.stringify(movieProperties)
+    },
+    create: {
+        name: vod?.title ?? vod?.name,
+        hostname,
+        stream_id: `${vod.stream_id ?? ''}`,
+        year: new Date(movieProperties.release_date)?.getFullYear()?.toString() ?? '',
         tmdb_id: movieProperties.tmdb_id,
         data: JSON.stringify(movieProperties)
     }
@@ -137,7 +232,6 @@ async function saveMovieProperties(tmdbData, vod) {
 
   return movieProperties;
 }
-
 async function searchMoviesBySimilarity(name, year, vod) {
   const candidates = allMovies
     .map(m => {
@@ -158,21 +252,13 @@ async function searchMoviesBySimilarity(name, year, vod) {
 
       return { movie, score };
     })
-    .filter(c => c.score > 0.75) // só pega parecido
+    .filter(c => c.score > 0.90) // só pega parecido
     .sort((a, b) => b.score - a.score); // do mais parecido pro menos
 
   return candidates.map(c => c.movie);
 }
 
-async function getMovieFromDbOrSimilarity({ tmdbId, name, year, vod }) {
-  // 1️⃣ Tenta buscar pelo tmdb_id
-  if (tmdbId) {
-    const movie = allMovies.find((i) => i.tmdb_id === tmdbId.toString());
-    if (movie) {
-        return JSON.parse(movie.data);
-    }
-  }
-
+async function getMovieFromDbOrSimilarity({ tmdbId, name, year, vod, hostname }) {
   if (name) {
     const similarMovies = await searchMoviesBySimilarity(name, year, vod);
     if (similarMovies.length > 0) {
