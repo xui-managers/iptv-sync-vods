@@ -13,9 +13,6 @@ let hasCache = false;
 
 async function getMovieInfoCL({tmdbId, name, year, vod, category_name, url, username, password}) {
     try {  
-        if(name.includes('Mutantes')) {
-          console.log(vod);
-        }
         const hostname = new URL(url).hostname;
         // Ignora filmes adultos para ser mais rapido, já que a maioria não tem TMDB
         if(name.toLowerCase().includes('[xxx]')  || name.toLowerCase().includes('xxx ') || name.toLowerCase().includes('[adulto]') || name.includes('+18') || category_name?.toLowerCase()?.includes('adulto')) {
@@ -27,11 +24,6 @@ async function getMovieInfoCL({tmdbId, name, year, vod, category_name, url, user
         if (tmdbId) {
           const movie = allMovies.find((i) => i.tmdb_id === tmdbId.toString());
           if (movie) {
-            
-              if(vod?.name.includes('Profundo') || vod?.name.includes('profundo')) {
-                console.log('tmdbid')
-                console.log(vod);
-              }
               return JSON.parse(movie.data);
           }
         }
@@ -179,10 +171,6 @@ async function saveMovieProperties(tmdbData, vod, hostname) {
 }
 
 async function saveMoviePropertiesByXUI(xuiData, vod, hostname) {
-        if(vod.name.includes('Stitch')) {
-          console.log(data);
-        }
-
   const movieProperties = {
     kinopoisk_url: xuiData?.info?.kinopoisk_url || '',
     tmdb_id: xuiData?.info?.id?.toString() ?? vod?.tmdb_id ?? '',
