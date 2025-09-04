@@ -50,7 +50,7 @@ async function initializeSeries(isNewSync = false) {
         await connection.query("DELETE FROM streams_categories WHERE category_type = 'series'");
         console.log('Banco de dados limpo, iniciando...');
       }
-      await processSeries(connection);
+      await processSeries(connection, false, isNewSync);
       
       const hostname = new URL(XTREAM_URL_VODS).hostname;
       await updateLaunchInfo({
@@ -61,7 +61,7 @@ async function initializeSeries(isNewSync = false) {
       })
       if(XTREAM_URL_VODS_ALT && XTREAM_URL_VODS_ALT != '') {
         useAlternative = true;
-        await processSeries(connection, true);
+        await processSeries(connection, true, isNewSync);
       }
       console.log("✅ Processamento de séries finalizado.");
     } catch (err) {
@@ -101,7 +101,7 @@ async function initializeSeries(isNewSync = false) {
   }
 }
 
-async function processSeries(connection, useAlternative = false) {
+async function processSeries(connection, useAlternative = false, isNewSync = false) {
   const hostname = new URL(useAlternative ? XTREAM_URL_VODS_ALT : XTREAM_URL_VODS).hostname;
   const xtreamApiUrl = `${useAlternative ? XTREAM_URL_VODS_ALT : XTREAM_URL_VODS}/player_api.php?username=${useAlternative ? XTREAM_USER_VODS_ALT : XTREAM_USER_VODS}&password=${useAlternative ? XTREAM_PASS_VODS_ALT : XTREAM_PASS_VODS}`;
 
@@ -127,6 +127,7 @@ async function processSeries(connection, useAlternative = false) {
       username: useAlternative ? XTREAM_USER_VODS_ALT : XTREAM_USER_VODS,
       userId: 0,
       hostname,
+      isNewSync,
     });
     if(info.lastUpdate !== null) {
       seriesList = seriesList.filter(series => {

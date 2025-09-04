@@ -3,7 +3,7 @@ const path = require('path');
 
 const launchFilePath = path.resolve('./launch-info.json');
 
-async function getLaunchInfo({ userId, username, hostname }) {
+async function getLaunchInfo({ userId, username, hostname, isNewSync }) {
   let data = [];
   let result = null;
 
@@ -30,7 +30,10 @@ async function getLaunchInfo({ userId, username, hostname }) {
     data.push(result);
     await fs.writeFile(launchFilePath, JSON.stringify(data, null, 4), 'utf-8');
   } else {
-    result = data[index];
+    result = {
+      ...data[index],
+      ...isNewSync ? { lastUpdate: null} : {},
+    };
   }
 
   return result;
