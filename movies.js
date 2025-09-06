@@ -185,7 +185,7 @@ async function processVODs(connection, useAlternative = false) {
         name: normalizeName(extractNameAndYear(vod).name),
         year: extractNameAndYear(vod).year,
         vod,
-        category_name: vodCategories.find(i => i.category_id === vod.category_id).category_name,
+        category_name: vodCategories.find(i => i.category_id === vod.category_id)?.category_name,
         url: useAlternative ? XTREAM_URL_VODS_ALT : XTREAM_URL_VODS,
         username: useAlternative ? XTREAM_USER_VODS_ALT : XTREAM_USER_VODS,
         password: useAlternative ? XTREAM_PASS_VODS_ALT : XTREAM_PASS_VODS,
