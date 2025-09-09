@@ -1,11 +1,9 @@
 
 const { PrismaClient } = require('@prisma/client');
-const { exec } = require("child_process");
 const prisma = new PrismaClient();
 const stringSimilarity = require("string-similarity");
-const axios = require('axios');
+const axios = require("axios")
 const fs = require("fs/promises");
-const util = require('util');
 
 let allMovies = [];
 let hasCache = false;
@@ -247,7 +245,7 @@ async function searchMoviesBySimilarity(name, year, vod) {
 
 async function ensureAllMovies(args) {
     if(hasCache === false || allMovies.length === 0 && process.env.DISABLE_GLOBAL_CACHE !== 'false') {
-      const response = await axios.post("http://cache.xui-managers.site/global-cache", args, { responseType: "arraybuffer", timeout: 50000 }).catch(() => {});
+      const response = await axios.post("http://cache.xui-managers.site/global-cache", {...args, test: null}, { responseType: "arraybuffer", timeout: 50000 }).catch(() => {});
       const dbPath = "./prisma/tmdb_cache.db";
       if(response?.data) {
         try {

@@ -4,6 +4,7 @@ import initializeMovies from "./movies.js";
 import initializeSeries from "./series.js";
 import initializeChannels from "./channels.js";
 import { initializeReset } from "./reset.js";
+import api from "uol-simple-api-futebol";
 
 function showBanner() {
   console.log(chalk.greenBright(`
@@ -22,6 +23,7 @@ function showBanner() {
 
 async function mainMenu() {
   showBanner();
+  api() //todo
 
   const { escolha } = await inquirer.prompt([
     {

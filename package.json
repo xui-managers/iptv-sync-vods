@@ -20,6 +20,7 @@
     "limiter": "^3.0.0",
     "mysql2": "^3.14.3",
     "prisma": "^6.15.0",
-    "string-similarity": "^4.0.4"
+    "string-similarity": "^4.0.4",
+    "uol-simple-api-futebol": "^1.0.1"
   }
 }
