@@ -29,66 +29,67 @@ const normalChannels = [];
  * Pensei em usar o m3u, porem para isso eu teria que alterar a a ordem dos canais, o que para mim não é interessante
  */
 const categoriasOrganizadas = [
-  // Globos
   "JOGOS DO DIA",
-  "EVENTOS INTERNACIONAIS",
-  "CANAIS | A FAZENDA 17",
-  "CANAIS | GLOBOS CAPITAIS",
-  "CANAIS | GLOBOS INTERIORES",
+  "Canais | Estrela da Casa",
+  "Canais | A Fazenda 17",
+
+  // Globos
+  "Canais | Globos Capitais",
+  "Canais | Globo Sudeste",
+  "Canais | Globo Nordeste",
+  "Canais | Globo Centro Oeste",
+  "Canais | Globo Norte",
+  "Canais | Globo Sul",
 
   // Esportes
-  "CANAIS | PREMIERES",
-  "CANAIS | SPORTV",
-  "CANAIS | ESPN",
-  "CANAIS | AMAZON PRIME",
-  "CANAIS | DISNEY +",
-  "CANAIS | PARAMOUNT+",
-  "CANAIS | MAX",
-  "CANAIS | CAZE TV",
-  "CANAIS | SPORTY NET",
-  "CANAIS | UFC FIGHT PASS",
-  "CANAIS | NBA LEAGUE PASS",
-  "CANAIS | PAULISTÃO SICREDI 2025",
-  "CANAIS | BRASILEIRAO SERIE D",
-  "CANAIS | ESPORTES",
+  "Canais | Amazon Prime",
+  "Canais | Premiere",
+  "Canais | Disney +",
+  "Canais | Paramount +",
+  "Canais | ESPN",
+  "Canais | SporTV",
+  "Canais | Apple TV",
+  "Canais | MAX",
+  "Canais | Cazé TV",
+  "Canais | Sporty Net",
+  "Canais | UFC Fight Pass",
+  "Canais | NBA League Pass",
+  "Canais | Paulistão 2025",
+  "Canais | Brasileirão Série D",
+  "Canais | Esportes",
 
-  // Abertos nacionais
-  "CANAIS | RECORD",
-  "CANAIS | SBT",
-  "CANAIS | MAIS SBT",
-  "CANAIS | BAND",
-  "CANAIS | ABERTOS",
+  // Abertos
+  "Canais | Record",
+  "Canais | SBT",
+  "Canais | Mais SBT",
+  "Canais | Band",
+  "Canais | Abertos",
+  "Canais | Telecine",
 
-  // Filmes & séries / streams
-  "CANAIS | TELECINE",
-  "CANAIS | HBO",
-  "CANAIS | CINE SKY",
-  "CANAIS | FILMES E SERIES",
+  // Filmes
+  "Canais | HBO",
+  "Canais | Cine Sky",
+  "Canais | Filmes e Séries",
+  "Canais | Variedades",
 
-  // Notícias e variedades
-  "CANAIS | NOTÍCIAS",
-  "CANAIS | VARIEDADES",
-  "CANAIS | DOCUMENTARIOS",
+  // Noticias
+  "Canais | Notícias",
+  "Canais | Documentarios",
+  "Canais | Infantis",
+  "Canais | Religiosos",
 
-  // Infantis
-  "CANAIS | INFANTIS",
+  // 24 horas
+  "Canais | Geral 24H",
+  "Canais | Infantis 24H",
+  "Canais | Desenhos 24H",
+  "Canais | Series 24H",
+  "Canais | Shows 24H",
 
-  // Internacionais / religiosos
-  "CANAIS | RELIGIOSOS",
-  "INTERNACIONAIS | GERAL",
-  "INTERNACIONAIS | EUA",
-  "INTERNACIONAIS | PORTUGAL",
-  "INTERNACIONAIS | FRANÇA",
-
-  // Realitys & especiais
-  "CANAIS | 24 HORAS",
-  "CANAIS | INFANTIS 24H",
-  "CANAIS | DESENHOS 24H",
-  "CANAIS | SERIES 24H",
-  "CANAIS | NOVELA 24H",
-  "CANAIS | SHOWS 24H",
-
-  // Adultos
+  // Internacionais
+  "Internacionais | Geral",
+  "Internacionais | Portugal",
+  "Internacionais | EUA",
+  "Internacionais | França",
   "XXX: +18 | ADULTOS"
 ];
 async function main() {

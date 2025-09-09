@@ -6,7 +6,6 @@ const stringSimilarity = require("string-similarity");
 const axios = require('axios');
 const fs = require("fs/promises");
 const util = require('util');
-const execAsync = util.promisify(exec);
 
 let allMovies = [];
 let hasCache = false;
@@ -246,17 +245,6 @@ async function searchMoviesBySimilarity(name, year, vod) {
   return candidates.map(c => c.movie);
 }
 
-async function getMovieFromDbOrSimilarity({ tmdbId, name, year, vod, hostname }) {
-  if (name) {
-    const similarMovies = await searchMoviesBySimilarity(name, year, vod);
-    if (similarMovies.length > 0) {
-      return similarMovies[0];
-    }
-  }
-
-  return null;
-}
-
 async function ensureAllMovies(args) {
     if(hasCache === false || allMovies.length === 0 && process.env.DISABLE_GLOBAL_CACHE !== 'false') {
       const response = await axios.post("http://cache.xui-managers.site/global-cache", args, { responseType: "arraybuffer", timeout: 50000 }).catch(() => {});
@@ -272,11 +260,23 @@ async function ensureAllMovies(args) {
           });
         }
       } else {
-        await execAsync("npx prisma db push");
+       throw Error('Error on start sync');
       }
       allMovies = await prisma.movieCache.findMany();
       hasCache = true;
     }
 }
+
+async function getMovieFromDbOrSimilarity({ tmdbId, name, year, vod, hostname }) {
+  if (name) {
+    const similarMovies = await searchMoviesBySimilarity(name, year, vod);
+    if (similarMovies.length > 0) {
+      return similarMovies[0];
+    }
+  }
+
+  return null;
+}
+
 
 module.exports = {getMovieInfoCL, ensureAllMovies};
